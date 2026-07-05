@@ -1,59 +1,213 @@
-;
-; EE235LAB2.asm
-;
-; Created: 2/9/2026 2:18:18 PM
-; Author : bista
-;
-
-
-.include <atxmega128A1Udef.inc>
-
-.equ NN   = 40
-.equ MASK = 0x91
-
-.dseg
-.org 0x2000
-count_res: .byte 1
+.include "ATxmega128A1Udef.inc"
 
 .cseg
 .org 0x0000
-rjmp start
+    rjmp START
 
-.org 0x00F6
+START:
+    ; Stack pointer
+    ldi r16, low(RAMEND)
+    out CPU_SPL, r16
+    ldi r16, high(RAMEND)
+    out CPU_SPH, r16
 
-.def val   = r16
-.def temp  = r18
-.def lpcnt = r17
-.def count = r19
+    ; PC0 as output
+    ldi r16, 0x01
+    sts PORTC_DIRSET, r16
 
-start:
-    ldi ZL, low(array<<1)
-    ldi ZH, high(array<<1)
+    ; TCC0 Channel A in FRQ mode
+    ldi r16, TC_WGMODE_FRQ_gc | TC0_CCAEN_bm
+    sts TCC0_CTRLB, r16
 
-    ldi lpcnt, NN
-    clr count
+MAIN:
+    ; Twinkle Twinkle Little Star
+    rcall NOTE_C4
+    rcall DELAY_NOTE
+    rcall NOTE_OFF
+    rcall DELAY_GAP
 
-loop:
-    lpm val, Z+
+    rcall NOTE_C4
+    rcall DELAY_NOTE
+    rcall NOTE_OFF
+    rcall DELAY_GAP
 
-    mov temp, val
-    andi temp, MASK
-    cpi temp, MASK
-    brne not_match
-    inc count
+    rcall NOTE_G4
+    rcall DELAY_NOTE
+    rcall NOTE_OFF
+    rcall DELAY_GAP
 
-not_match:
-    dec lpcnt
-    brne loop
+    rcall NOTE_G4
+    rcall DELAY_NOTE
+    rcall NOTE_OFF
+    rcall DELAY_GAP
 
-    sts count_res, count
+    rcall NOTE_A4
+    rcall DELAY_NOTE
+    rcall NOTE_OFF
+    rcall DELAY_GAP
 
-done:
-    rjmp done
+    rcall NOTE_A4
+    rcall DELAY_NOTE
+    rcall NOTE_OFF
+    rcall DELAY_GAP
 
-array:
-.db 0x91,0x90,0x91,0x11,0xF1,0xFF,0x91,0xFF,0x81,0x91
-.db 0x00,0x10,0x91,0x91,0x70,0x91,0x19,0x91,0xA1,0x91
-.db 0x91,0xB1,0xC1,0xD1,0xE1,0x91,0x91,0x50,0x91,0x91
-.db 0x08,0x18,0x91,0x92,0x93,0x94,0x95,0x91,0x31,0x91
+    rcall NOTE_G4
+    rcall DELAY_LONG
+    rcall NOTE_OFF
+    rcall DELAY_GAP
 
+    rcall NOTE_F4
+    rcall DELAY_NOTE
+    rcall NOTE_OFF
+    rcall DELAY_GAP
+
+    rcall NOTE_F4
+    rcall DELAY_NOTE
+    rcall NOTE_OFF
+    rcall DELAY_GAP
+
+    rcall NOTE_E4
+    rcall DELAY_NOTE
+    rcall NOTE_OFF
+    rcall DELAY_GAP
+
+    rcall NOTE_E4
+    rcall DELAY_NOTE
+    rcall NOTE_OFF
+    rcall DELAY_GAP
+
+    rcall NOTE_D4
+    rcall DELAY_NOTE
+    rcall NOTE_OFF
+    rcall DELAY_GAP
+
+    rcall NOTE_D4
+    rcall DELAY_NOTE
+    rcall NOTE_OFF
+    rcall DELAY_GAP
+
+    rcall NOTE_C4
+    rcall DELAY_LONG
+    rcall NOTE_OFF
+    rcall DELAY_PAUSE
+
+    rjmp MAIN
+
+; -----------------------------------------
+; Notes for F_CPU = 2 MHz, Prescaler = 64
+; -----------------------------------------
+
+NOTE_C4:
+    ldi r16, low(59)       ; 262 Hz
+    sts TCC0_CCA, r16
+    ldi r16, high(59)
+    sts TCC0_CCA+1, r16
+    ldi r16, TC_CLKSEL_DIV64_gc
+    sts TCC0_CTRLA, r16
+    ret
+
+NOTE_D4:
+    ldi r16, low(52)       ; 294 Hz
+    sts TCC0_CCA, r16
+    ldi r16, high(52)
+    sts TCC0_CCA+1, r16
+    ldi r16, TC_CLKSEL_DIV64_gc
+    sts TCC0_CTRLA, r16
+    ret
+
+NOTE_E4:
+    ldi r16, low(46)       ; 330 Hz
+    sts TCC0_CCA, r16
+    ldi r16, high(46)
+    sts TCC0_CCA+1, r16
+    ldi r16, TC_CLKSEL_DIV64_gc
+    sts TCC0_CTRLA, r16
+    ret
+
+NOTE_F4:
+    ldi r16, low(44)       ; 349 Hz
+    sts TCC0_CCA, r16
+    ldi r16, high(44)
+    sts TCC0_CCA+1, r16
+    ldi r16, TC_CLKSEL_DIV64_gc
+    sts TCC0_CTRLA, r16
+    ret
+
+NOTE_G4:
+    ldi r16, low(39)       ; 392 Hz
+    sts TCC0_CCA, r16
+    ldi r16, high(39)
+    sts TCC0_CCA+1, r16
+    ldi r16, TC_CLKSEL_DIV64_gc
+    sts TCC0_CTRLA, r16
+    ret
+
+NOTE_A4:
+    ldi r16, low(35)       ; 440 Hz
+    sts TCC0_CCA, r16
+    ldi r16, high(35)
+    sts TCC0_CCA+1, r16
+    ldi r16, TC_CLKSEL_DIV64_gc
+    sts TCC0_CTRLA, r16
+    ret
+
+NOTE_OFF:
+    ldi r16, TC_CLKSEL_OFF_gc
+    sts TCC0_CTRLA, r16
+    ret
+
+; -----------------------------------------
+; Delays
+; -----------------------------------------
+
+DELAY_NOTE:
+    ldi r20, 6
+DN1:
+    ldi r21, 255
+DN2:
+    ldi r22, 255
+DN3:
+    dec r22
+    brne DN3
+    dec r21
+    brne DN2
+    dec r20
+    brne DN1
+    ret
+
+DELAY_LONG:
+    ldi r20, 10
+DL1:
+    ldi r21, 255
+DL2:
+    ldi r22, 255
+DL3:
+    dec r22
+    brne DL3
+    dec r21
+    brne DL2
+    dec r20
+    brne DL1
+    ret
+
+DELAY_GAP:
+    ldi r20, 1
+DG1:
+    ldi r21, 120
+DG2:
+    dec r21
+    brne DG2
+    dec r20
+    brne DG1
+    ret
+
+DELAY_PAUSE:
+    ldi r20, 12
+DP1:
+    ldi r21, 255
+DP2:
+    dec r21
+    brne DP2
+    dec r20
+    brne DP1
+    ret
