@@ -1,0 +1,59 @@
+;
+; EE235LAB2.asm
+;
+; Created: 2/9/2026 2:18:18 PM
+; Author : bista
+;
+
+
+.include <atxmega128A1Udef.inc>
+
+.equ NN   = 40
+.equ MASK = 0x91
+
+.dseg
+.org 0x2000
+count_res: .byte 1
+
+.cseg
+.org 0x0000
+rjmp start
+
+.org 0x00F6
+
+.def val   = r16
+.def temp  = r18
+.def lpcnt = r17
+.def count = r19
+
+start:
+    ldi ZL, low(array<<1)
+    ldi ZH, high(array<<1)
+
+    ldi lpcnt, NN
+    clr count
+
+loop:
+    lpm val, Z+
+
+    mov temp, val
+    andi temp, MASK
+    cpi temp, MASK
+    brne not_match
+    inc count
+
+not_match:
+    dec lpcnt
+    brne loop
+
+    sts count_res, count
+
+done:
+    rjmp done
+
+array:
+.db 0x91,0x90,0x91,0x11,0xF1,0xFF,0x91,0xFF,0x81,0x91
+.db 0x00,0x10,0x91,0x91,0x70,0x91,0x19,0x91,0xA1,0x91
+.db 0x91,0xB1,0xC1,0xD1,0xE1,0x91,0x91,0x50,0x91,0x91
+.db 0x08,0x18,0x91,0x92,0x93,0x94,0x95,0x91,0x31,0x91
+
